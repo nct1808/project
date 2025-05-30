@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1400px;
+            height: 80vh;
+            display: flex;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            background: linear-gradient(90deg, #6c5ce7, #5f3dc4);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .history-search {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-box:focus {
+            border-color: #6c5ce7;
+        }
+
+        .history-actions {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+        }
+
+        .history-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .clear-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #ff5252;
+        }
+
+        .stats-btn {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .stats-btn:hover {
+            background: #26d0ce;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .history-date {
+            font-weight: bold;
+            color: #666;
+            margin: 10px 0 5px;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        .history-item {
+            margin-bottom: 8px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .history-item:hover {
+            background: #e9ecef;
+            border-left-color: #6c5ce7;
+        }
+
+        .history-item.active {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+
+        .history-question {
+            font-size: 0.9em;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: 500;
+            max-height: 2.6em;
+            overflow: hidden;
+            line-height: 1.3em;
+            word-wrap: break-word;
+            
+        
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .history-time {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .history-stats {
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .status-indicator.loading {
+            background: #ff9800;
+        }
+
+        .status-indicator.ready {
+            background: #4CAF50;
+        }
+
+        .status-indicator.error {
+            background: #f44336;
+        }
+
+        .chat-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .user-message .message-content {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 18px 18px 5px 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .bot-message .message-content {
+            display: inline-block;
+            background: white;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 18px 18px 18px 5px;
+            max-width: 85%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-left: 4px solid #4CAF50;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .error-message .message-content {
+            background: #ffe6e6;
+            color: #d32f2f;
+            border-left: 4px solid #f44336;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #007bff;
+        }
+
+        .chat-input.error {
+            border-color: #f44336;
+        }
+
+        .send-button {
+            padding: 15px 25px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        .send-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .validation-message {
+            margin-top: 10px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .validation-message.error {
+            background: #ffe6e6;
+            color: #d32f2f;
+            border: 1px solid #f44336;
+        }
+
+        .char-counter {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .char-counter.warning {
+            color: #ff9800;
+        }
+
+        .char-counter.error {
+            color: #f44336;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-dots {
+            display: inline-block;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 18px 18px 18px 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+            margin-right: 3px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+                height: 90vh;
+                margin: 10px;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 200px;
+                order: 2;
+            }
+            
+            .chat-container {
+                height: auto;
+                flex: 1;
+                order: 1;
+            }
+            
+            .user-message .message-content,
+            .bot-message .message-content {
+                max-width: 90%;
+            }
+
+            .history-list {
+                max-height: 120px;
+            }
+        }
+
+        .no-history {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .search-results {
+            margin-top: 10px;
+        }
+
+        .search-highlight {
+            background: #fff59d;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .sidebar.collapsed {
+            width: 50px;
+        }
+
+        .sidebar.collapsed .sidebar-header h2,
+        .sidebar.collapsed .history-search,
+        .sidebar.collapsed .history-actions,
+        .sidebar.collapsed .history-stats {
+            display: none;
+        }
+
+        .toggle-sidebar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal-btn.confirm {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: #e9ecef;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3>Đang khởi động chatbot...</h3>
+            <p id="loadingStatus">Đang tải cấu hình...</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar lịch sử -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="toggle-sidebar" id="toggleSidebar">📋</button>
+                <h2>📚 Lịch sử chat</h2>
+                <div id="historyStats" class="history-stats">
+                    Đang tải...
+                </div>
+            </div>
+
+            <div class="history-search">
+                <input 
+                    type="text" 
+                    class="search-box" 
+                    id="searchBox" 
+                    placeholder="🔍 Tìm kiếm trong lịch sử..."
+                >
+            </div>
+
+            <div class="history-actions">
+                <button class="history-btn stats-btn" id="refreshHistory">🔄 Làm mới</button>
+                <button class="history-btn clear-btn" id="clearHistory">🗑️ Xóa hết</button>
+            </div>
+
+            <div class="history-list" id="historyList">
+                <div class="no-history">
+                    Chưa có lịch sử chat nào
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat container -->
+        <div class="chat-container">
+        <div class="chat-header">
+            <h1>🤖 Chatbot tư vấn</h1>
+            <div class="status-indicator loading" id="statusIndicator">
+                Đang khởi động...
+            </div>
+        </div>
+
+        <div class="chat-info">
+            <strong>Hướng dẫn:</strong> Hỏi về phân loại đèn, ghi nhãn, an toàn điện, phương pháp thử nghiệm, tiêu chuẩn...
+            <br><strong>Lưu ý:</strong> Câu hỏi tối đa 500 ký tự
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-content">
+                    Xin chào! Tôi là chatbot hỗ trợ . 
+                    
+Tôi có thể giúp bạn:
+📋 Tra cứu thông tin về phân loại đèn LED
+🔍 Tìm hiểu về các yêu cầu ghi nhãn
+⚠️ Kiểm tra các tiêu chuẩn an toàn điện
+🧪 Hướng dẫn phương pháp thử nghiệm
+
+Hãy đặt câu hỏi để bắt đầu!
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="Nhập câu hỏi của bạn..."
+                    maxlength="500"
+                    disabled
+                >
+                <button class="send-button" id="sendButton" disabled>
+                    <span>Gửi</span>
+                    <span>📤</span>
+                </button>
+            </div>
+            <div class="char-counter" id="charCounter">0/500</div>
+            <div class="validation-message" id="validationMessage"></div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận xóa lịch sử -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3>🗑️ Xác nhận xóa</h3>
+            <p>Bạn có chắc muốn xóa toàn bộ lịch sử chat?<br>Hành động này không thể hoàn tác.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" id="cancelDelete">Hủy</button>
+                <button class="modal-btn confirm" id="confirmDelete">Xóa hết</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let isInitialized = false;
+        let isProcessing = false;
+        let currentSessionId = generateSessionId();
+        let searchTimeout = null;
+
+        // DOM elements
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingStatus = document.getElementById('loadingStatus');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const charCounter = document.getElementById('charCounter');
+        const validationMessage = document.getElementById('validationMessage');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // History elements
+        const sidebar = document.getElementById('sidebar');
+        const historyList = document.getElementById('historyList');
+        const historyStats = document.getElementById('historyStats');
+        const searchBox = document.getElementById('searchBox');
+        const refreshHistory = document.getElementById('refreshHistory');
+        const clearHistory = document.getElementById('clearHistory');
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmDelete = document.getElementById('confirmDelete');
+        const cancelDelete = document.getElementById('cancelDelete');
+
+        function generateSessionId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Khởi tạo chatbot thật từ backend Python
+        async function initializeChatbot() {
+            try {
+                // Kiểm tra status trước
+                loadingStatus.textContent = "Đang kiểm tra trạng thái chatbot...";
+                const isReady = await checkChatbotStatus();
+                
+                if (isReady) {
+                    // Đã sẵn sàng
+                    loadingStatus.textContent = "Chatbot đã sẵn sàng!";
+                } else {
+                    // Cần khởi tạo
+                    const steps = [
+                        { message: "Đang tải cấu hình...", delay: 1000 },
+                        { message: "Đang kiểm tra prompt.json...", delay: 800 },
+                        { message: "Đang tải tài liệu...", delay: 1200 },
+                        { message: "Đang tạo vector database...", delay: 1500 },
+                        { message: "Đang kết nối Ollama...", delay: 800 }
+                    ];
+
+                    for (let step of steps) {
+                        loadingStatus.textContent = step.message;
+                        await new Promise(resolve => setTimeout(resolve, step.delay));
+                    }
+
+                    loadingStatus.textContent = "Đang khởi tạo chatbot...";
+                    const result = await initializeChatbotAPI();
+                    loadingStatus.textContent = "Sẵn sàng!";
+                }
+
+                // Hoàn thành khởi động
+                await new Promise(resolve => setTimeout(resolve, 500));
+                loadingOverlay.style.display = 'none';
+                statusIndicator.textContent = 'Sẵn sàng 🟢';
+                statusIndicator.className = 'status-indicator ready';
+                chatInput.disabled = false;
+                sendButton.disabled = false;
+                chatInput.focus();
+                isInitialized = true;
+
+                // Load history after initialization
+                loadHistory();
+                loadHistoryStats();
+
+            } catch (error) {
+                console.error('Lỗi khởi tạo:', error);
+                loadingStatus.textContent = `Lỗi: ${error.message}`;
+                statusIndicator.textContent = 'Lỗi ❌';
+                statusIndicator.className = 'status-indicator error';
+                
+                // Hiển thị lỗi trong chat
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    addMessage(`❌ Lỗi khởi tạo chatbot: ${error.message}`, false, true);
+                }, 2000);
+            }
+        }
+
+        // Validate real-time với API
+        async function validateUserInputAPI(question) {
+            try {
+                const response = await fetch('/api/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+
+                if (!response.ok) {
+                    return { valid: false, message: "Lỗi kết nối validation API" };
+                }
+
+                return await response.json();
+            } catch (error) {
+                return { valid: false, message: `Lỗi validation: ${error.message}` };
+            }
+        }
+
+        // Validation functions - tương thích với backend
+        function validateUserInput(question) {
+            if (!question || !question.trim()) {
+                return { valid: false, message: "❌ Vui lòng nhập câu hỏi" };
+            }
+
+            if (question.length > 500) {
+                return { valid: false, message: "❌ Câu hỏi quá dài (tối đa 500 ký tự)" };
+            }
+
+            // Kiểm tra ký tự nguy hiểm (giống backend)
+            const dangerousChars = ['<script>', '<?php', 'drop table'];
+            for (let char of dangerousChars) {
+                if (question.toLowerCase().includes(char)) {
+                    return { valid: false, message: "❌ Câu hỏi chứa nội dung không hợp lệ" };
+                }
+            }
+
+            return { valid: true, message: "Valid" };
+        }
+
+        function updateCharCounter() {
+            const length = chatInput.value.length;
+            charCounter.textContent = `${length}/500`;
+            
+            if (length > 450) {
+                charCounter.className = 'char-counter error';
+            } else if (length > 400) {
+                charCounter.className = 'char-counter warning';
+            } else {
+                charCounter.className = 'char-counter';
+            }
+        }
+
+        function showValidationMessage(message, isError = false) {
+            validationMessage.textContent = message;
+            validationMessage.className = `validation-message ${isError ? 'error' : ''}`;
+            validationMessage.style.display = message ? 'block' : 'none';
+        }
+
+        function addMessage(content, isUser = false, isError = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'} ${isError ? 'error-message' : ''}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTyping() {
+            typingIndicator.classList.add('active');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTyping() {
+            typingIndicator.classList.remove('active');
+        }
+
+        // Simulate chat với backend
+        async function sendMessage() {
+            if (!isInitialized || isProcessing) return;
+
+            const question = chatInput.value.trim();
+            const validation = validateUserInput(question);
+
+            if (!validation.valid) {
+                showValidationMessage(validation.message, true);
+                chatInput.classList.add('error');
+                return;
+            }
+
+            // Clear validation
+            showValidationMessage('');
+            chatInput.classList.remove('error');
+
+            // Add user message
+            addMessage(question, true);
+            chatInput.value = '';
+            updateCharCounter();
+
+            // Set processing state
+            isProcessing = true;
+            sendButton.disabled = true;
+            chatInput.disabled = true;
+            showTyping();
+
+            try {
+                // Gọi API thật đến Python backend
+                const response = await simulateAPICall(question);
+                
+                hideTyping();
+                
+                if (response.success) {
+                    addMessage(response.data);
+                    // Reload history sau khi chat thành công
+                    loadHistory();
+                    loadHistoryStats();
+                } else {
+                    // Hiển thị lỗi từ backend (validation hoặc system error)
+                    addMessage(response.error || "Có lỗi xảy ra", false, true);
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage(`❌ Lỗi kết nối backend: ${error.message}`, false, true);
+            } finally {
+                // Reset processing state
+                isProcessing = false;
+                sendButton.disabled = false;
+                chatInput.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        // API call đến Flask backend (code Python của bạn)
+        async function simulateAPICall(question) {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        question: question,
+                        session_id: currentSessionId 
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                return {
+                    success: false,
+                    error: `Lỗi kết nối: ${error.message}`
+                };
+            }
+        }
+
+        // ========== HISTORY MANAGEMENT ==========
+        
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/history');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayHistory(result.data);
+                } else {
+                    console.error('Lỗi load lịch sử:', result.error);
+                }
+            } catch (error) {
+                console.error('Lỗi load lịch sử:', error);
+            }
+        }
+
+        async function loadHistoryStats() {
+            try {
+                const response = await fetch('/api/history/stats');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const stats = result.data;
+                    historyStats.innerHTML = `
+                        📊 ${stats.total_chats} cuộc hội thoại<br>
+                        📅 ${stats.total_days} ngày
+                    `;
+                }
+            } catch (error) {
+                console.error('Lỗi load stats:', error);
+            }
+        }
+
+        function displayHistory(sessions) {
+            if (Object.keys(sessions).length === 0) {
+                historyList.innerHTML = '<div class="no-history">Chưa có lịch sử chat nào</div>';
+                return;
+            }
+
+            let html = '';
+            
+            for (const [date, chats] of Object.entries(sessions)) {
+                html += `<div class="history-date">${formatDate(date)}</div>`;
+                
+                chats.forEach(chat => {
+                    html += `
+                        <div class="history-item" data-chat-id="${chat.id}" onclick="loadChatFromHistory('${chat.id}')">
+                            <div class="history-question">${escapeHtml(chat.question)}</div>
+                            <div class="history-time">${chat.time}</div>
+                        </div>
+                    `;
+                });
+            }
+            
+            historyList.innerHTML = html;
+        }
+
+        async function loadChatFromHistory(chatId) {
+            try {
+                const response = await fetch('/api/history');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const allChats = [];
+                    Object.values(result.data).forEach(dateChats => {
+                        allChats.push(...dateChats);
+                    });
+                    
+                    const chat = allChats.find(c => c.id === chatId);
+                    if (chat) {
+                        // Clear current chat
+                        chatMessages.innerHTML = `
+                            <div class="message bot-message">
+                                <div class="message-content">
+                                    Xin chào! Tôi là chatbot hỗ trợ . 
+                                    
+            Tôi có thể giúp bạn:
+            📋 Tra cứu thông tin về phân loại đèn LED
+            🔍 Tìm hiểu về các yêu cầu ghi nhãn
+            ⚠️ Kiểm tra các tiêu chuẩn an toàn điện
+            🧪 Hướng dẫn phương pháp thử nghiệm
+
+            Hãy đặt câu hỏi để bắt đầu!
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add the selected chat
+                        addMessage(chat.question, true);
+                        addMessage(chat.answer, false);
+                        
+                        // Highlight selected item
+                        document.querySelectorAll('.history-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        document.querySelector(`[data-chat-id="${chatId}"]`).classList.add('active');
+                    }
+                }
+            } catch (error) {
+                console.error('Lỗi load chat from history:', error);
+            }
+        }
+
+        async function searchHistory() {
+            const query = searchBox.value.trim();
+            
+            if (!query) {
+                loadHistory(); // Reload all history
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/history/search?q=${encodeURIComponent(query)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    displaySearchResults(result.data, query);
+                } else {
+                    console.error('Lỗi search:', result.error);
+                }
+            } catch (error) {
+                console.error('Lỗi search:', error);
+            }
+        }
+
+        function displaySearchResults(results, query) {
+            if (results.length === 0) {
+                historyList.innerHTML = '<div class="no-history">Không tìm thấy kết quả nào</div>';
+                return;
+            }
+
+            let html = `<div class="history-date">🔍 Kết quả tìm kiếm (${results.length})</div>`;
+            
+            results.forEach(chat => {
+                const highlightedQuestion = highlightText(chat.question, query);
+                
+                html += `
+                    <div class="history-item" data-chat-id="${chat.id}" onclick="loadChatFromHistory('${chat.id}')">
+                        <div class="history-question">${highlightedQuestion}</div>
+                        <div class="history-time">${chat.date} ${chat.time}</div>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+        }
+
+        async function clearAllHistory() {
+            try {
+                const response = await fetch('/api/history/clear', {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    historyList.innerHTML = '<div class="no-history">Chưa có lịch sử chat nào</div>';
+                    loadHistoryStats();
+                    confirmModal.style.display = 'none';
+                } else {
+                    alert('Lỗi xóa lịch sử: ' + result.error);
+                }
+            } catch (error) {
+                alert('Lỗi xóa lịch sử: ' + error.message);
+            }
+        }
+
+        // Helper functions
+        function formatDate(dateStr) {
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            
+            if (dateStr === today) return '📅 Hôm nay';
+            if (dateStr === yesterday) return '📅 Hôm qua';
+            
+            const date = new Date(dateStr);
+            return `📅 ${date.toLocaleDateString('vi-VN')}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function highlightText(text, query) {
+            const regex = new RegExp(`(${query})`, 'gi');
+            return escapeHtml(text).replace(regex, '<span class="search-highlight">$1</span>');
+        }
+
+        // Kiểm tra status chatbot khi load trang
+        async function checkChatbotStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                if (!status.initialized) {
+                    if (status.error) {
+                        throw new Error(status.error);
+                    } else {
+                        // Thử khởi tạo lại
+                        await initializeChatbotAPI();
+                    }
+                }
+                return true;
+            } catch (error) {
+                console.error('Lỗi kiểm tra status:', error);
+                return false;
+            }
+        }
+
+        // Gọi API khởi tạo chatbot
+        async function initializeChatbotAPI() {
+            try {
+                const response = await fetch('/api/initialize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+                
+                return result;
+            } catch (error) {
+                throw new Error(`Không thể khởi tạo chatbot: ${error.message}`);
+            }
+        }
+
+        // Event listeners
+        chatInput.addEventListener('input', updateCharCounter);
+        
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
+        // Clear validation on input
+        chatInput.addEventListener('input', () => {
+            if (chatInput.classList.contains('error')) {
+                chatInput.classList.remove('error');
+                showValidationMessage('');
+            }
+        });
+
+        // History event listeners
+        searchBox.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchHistory, 300); // Debounce search
+        });
+
+        refreshHistory.addEventListener('click', () => {
+            loadHistory();
+            loadHistoryStats();
+        });
+
+        clearHistory.addEventListener('click', () => {
+            confirmModal.style.display = 'block';
+        });
+
+        confirmDelete.addEventListener('click', clearAllHistory);
+
+        cancelDelete.addEventListener('click', () => {
+            confirmModal.style.display = 'none';
+        });
+
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === confirmModal) {
+                confirmModal.style.display = 'none';
+            }
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', initializeChatbot);
+    </script>
+</body>
+</html>
